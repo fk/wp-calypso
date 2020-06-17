@@ -11,7 +11,7 @@ const debug = debugFactory( 'calypso:media' );
 import Dispatcher from 'dispatcher';
 import wpcom from 'lib/wp';
 import { reduxDispatch, reduxGetState } from 'lib/redux-bridge';
-import { getEditorPostId } from 'state/ui/editor/selectors';
+import { getEditorPostId } from 'state/editor/selectors';
 import { createTransientMedia } from './utils';
 import getMediaItemErrors from 'state/selectors/get-media-item-errors';
 import MediaStore from './store';

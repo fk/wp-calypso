@@ -1,7 +1,6 @@
 /**
  * External dependencies
  */
-
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
@@ -19,12 +18,12 @@ import accept from 'lib/accept';
 import { recordGoogleEvent } from 'state/analytics/actions';
 import { saveSiteSettings, updateSiteSettings } from 'state/site-settings/actions';
 import { isSavingSiteSettings } from 'state/site-settings/selectors';
-import { setEditorMediaModalView } from 'state/ui/editor/actions';
-import { resetAllImageEditorState } from 'state/ui/editor/image-editor/actions';
+import { setEditorMediaModalView } from 'state/editor/actions';
+import { resetAllImageEditorState } from 'state/editor/image-editor/actions';
 import { receiveMedia, deleteMedia } from 'state/media/actions';
 import { getCustomizerUrl, getSiteAdminUrl, isJetpackSite } from 'state/sites/selectors';
 import { ModalViews } from 'state/ui/media-modal/constants';
-import { AspectRatios } from 'state/ui/editor/image-editor/constants';
+import { AspectRatios } from 'state/editor/image-editor/constants';
 import { getSelectedSiteId, getSelectedSite } from 'state/ui/selectors';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormLabel from 'components/forms/form-label';
@@ -33,10 +32,7 @@ import InfoPopover from 'components/info-popover';
 import MediaActions from 'lib/media/actions';
 import MediaStore from 'lib/media/store';
 import { isItemBeingUploaded } from 'lib/media/utils';
-import {
-	getImageEditorCrop,
-	getImageEditorTransform,
-} from 'state/ui/editor/image-editor/selectors';
+import { getImageEditorCrop, getImageEditorTransform } from 'state/editor/image-editor/selectors';
 import getSiteIconId from 'state/selectors/get-site-icon-id';
 import getSiteIconUrl from 'state/selectors/get-site-icon-url';
 import isPrivateSite from 'state/selectors/is-private-site';

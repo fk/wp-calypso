@@ -23,15 +23,12 @@ import { isItemBeingUploaded } from 'lib/media/utils';
 import MediaActions from 'lib/media/actions';
 import { receiveMedia, deleteMedia } from 'state/media/actions';
 import { getSelectedSiteId, getSelectedSite } from 'state/ui/selectors';
-import { resetAllImageEditorState } from 'state/ui/editor/image-editor/actions';
-import {
-	getImageEditorCrop,
-	getImageEditorTransform,
-} from 'state/ui/editor/image-editor/selectors';
-import { setEditorMediaModalView } from 'state/ui/editor/actions';
+import { resetAllImageEditorState } from 'state/editor/image-editor/actions';
+import { getImageEditorCrop, getImageEditorTransform } from 'state/editor/image-editor/selectors';
+import { setEditorMediaModalView } from 'state/editor/actions';
 import { ModalViews } from 'state/ui/media-modal/constants';
 import resizeImageUrl from 'lib/resize-image-url';
-import { AspectRatios } from 'state/ui/editor/image-editor/constants';
+import { AspectRatios } from 'state/editor/image-editor/constants';
 import Spinner from 'components/spinner';
 
 /**

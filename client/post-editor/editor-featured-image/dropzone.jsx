@@ -1,7 +1,6 @@
 /**
  * External dependencies
  */
-
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { head, uniqueId } from 'lodash';
@@ -20,7 +19,7 @@ import FeaturedImageDropZoneIcon from './dropzone-icon';
 import { receiveMedia, deleteMedia } from 'state/media/actions';
 import { editPost } from 'state/posts/actions';
 import { getSelectedSiteId, getSelectedSite } from 'state/ui/selectors';
-import { getEditorPostId } from 'state/ui/editor/selectors';
+import { getEditorPostId } from 'state/editor/selectors';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { userCan } from 'lib/site/utils';
 
