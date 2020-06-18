@@ -15,6 +15,7 @@ import { SubTitle, Title } from '../../components/titles';
 import { useTrackStep } from '../../hooks/use-track-step';
 import useStepNavigation from '../../hooks/use-step-navigation';
 import Badge from '../../components/badge';
+import MshotsImage from '../../components/mshots-image';
 import designs, { getDesignImageUrl } from '../../available-designs';
 import JetpackLogo from 'components/jetpack-logo'; // @TODO: extract to @automattic package
 import type { Design } from '../../stores/onboard/types';
@@ -69,11 +70,12 @@ const DesignSelector: React.FunctionComponent = () => {
 							} }
 						>
 							<span className="design-selector__image-frame">
-								<img
+								<MshotsImage src={ getDesignImageUrl( design ) } alt="" />
+								{ /* <img
 									alt=""
 									aria-labelledby={ makeOptionId( design ) }
 									src={ getDesignImageUrl( design ) }
-								/>
+								/> */ }
 							</span>
 							<span className="design-selector__option-overlay">
 								<span id={ makeOptionId( design ) } className="design-selector__option-meta">
