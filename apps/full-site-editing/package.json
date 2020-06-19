@@ -96,7 +96,7 @@
 		"@wordpress/compose": "*",
 		"@wordpress/data": "*",
 		"@wordpress/date": "*",
-		"@wordpress/dependency-extraction-webpack-plugin": "^2.6.0",
+		"@wordpress/dependency-extraction-webpack-plugin": "^2.7.0",
 		"@wordpress/dom-ready": "*",
 		"@wordpress/edit-post": "*",
 		"@wordpress/editor": "*",
@@ -116,6 +116,6 @@
 		"newspack-blocks": "github:Automattic/newspack-blocks#v1.7.0"
 	},
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^6.0.0"
+		"@wordpress/eslint-plugin": "^7.0.0"
 	}
 }
