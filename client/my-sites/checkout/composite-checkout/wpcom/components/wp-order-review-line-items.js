@@ -11,7 +11,7 @@ import {
 	useEvents,
 	Button,
 } from '@automattic/composite-checkout';
-import { useTranslate } from 'i18n-calypso';
+import { useTranslate, useRtl } from 'i18n-calypso';
 
 /**
  * Internal dependencies
@@ -55,6 +55,7 @@ function WPLineItem( {
 	const shouldShowVariantSelector = getItemVariants && item.wpcom_meta && ! isRenewal;
 	const isGSuite = !! item.wpcom_meta?.extra?.google_apps_users?.length;
 	const isSavings = item.type === 'coupon';
+	const isRtl = useRtl();
 
 	let gsuiteDiscountCallout = null;
 	if (
@@ -114,6 +115,7 @@ function WPLineItem( {
 								},
 							} );
 						} }
+						isRtl={ isRtl }
 					>
 						<DeleteIcon uniqueID={ deleteButtonId } product={ item.label } />
 					</DeleteButton>
@@ -174,8 +176,9 @@ WPLineItem.propTypes = {
 };
 
 function LineItemPrice( { item, isSummary } ) {
+	const isRtl = useRtl();
 	return (
-		<LineItemPriceUI isSummary={ isSummary }>
+		<LineItemPriceUI isSummary={ isSummary } isRtl={ isRtl }>
 			{ item.amount.value < item.wpcom_meta?.item_original_subtotal_integer ? (
 				<>
 					<s>{ item.wpcom_meta?.item_original_subtotal_display }</s> { item.amount.displayValue }
@@ -226,14 +229,14 @@ const LineItemTitle = styled.div`
 `;
 
 const LineItemPriceUI = styled.span`
-	margin-left: 12px;
+	${ ( props ) => ( props.isRtl ? 'margin-right: 12px;' : 'margin-left: 12px;' ) }
 	font-size: ${ ( { isSummary } ) => ( isSummary ? '14px' : '16px' ) };
 `;
 
 const DeleteButton = styled( Button )`
 	position: absolute;
 	padding: 10px;
-	right: -50px;
+	${ ( props ) => ( props.isRtl ? 'left: 50px;' : 'right: -50px;' ) }
 	top: 7px;
 
 	:hover rect {
@@ -303,8 +306,12 @@ export function WPOrderReviewLineItems( {
 	onChangePlanLength,
 	isWhiteGloveOffer,
 } ) {
+	const isRtl = useRtl();
 	return (
-		<WPOrderReviewList className={ joinClasses( [ className, 'order-review-line-items' ] ) }>
+		<WPOrderReviewList
+			className={ joinClasses( [ className, 'order-review-line-items' ] ) }
+			isRtl={ isRtl }
+		>
 			{ items
 				.filter( ( item ) => item.label ) // remove items without a label
 				.map( ( item ) => {
@@ -351,7 +358,7 @@ WPOrderReviewLineItems.propTypes = {
 const WPOrderReviewList = styled.ul`
 	border-top: 1px solid ${ ( props ) => props.theme.colors.borderColorLight };
 	box-sizing: border-box;
-	margin: 20px 30px 20px 0;
+	margin: ${ ( props ) => ( props.isRtl ? '20px 0 20px 30px' : '20px 30px 20px 0' ) };
 
 	.is-summary & {
 		border-top: 0;
