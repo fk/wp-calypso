@@ -3,7 +3,7 @@
  */
 import { useI18n } from '@automattic/react-i18n';
 import { BlockEditorProvider, BlockList } from '@wordpress/block-editor';
-import { Popover, DropZoneProvider } from '@wordpress/components';
+import { Popover, DropZoneProvider, SlotFillProvider } from '@wordpress/components';
 import { createBlock, registerBlockType } from '@wordpress/blocks';
 import '@wordpress/format-library';
 import React, { useRef, useEffect } from 'react';
@@ -75,32 +75,34 @@ export function Gutenboard() {
 	/* eslint-disable wpcalypso/jsx-classname-namespace */
 	return (
 		<div className="block-editor__container">
-			<DropZoneProvider>
-				<div className="gutenboarding__layout edit-post-layout">
-					<Header />
-					{ showSignupDialog && <SignupForm onRequestClose={ onSignupDialogClose } /> }
-					<BlockEditorProvider
-						useSubRegistry={ false }
-						value={ [ onboardingBlock.current ] }
-						settings={ {
-							templateLock: 'all',
-							alignWide: true,
-						} }
-					>
-						<div className="gutenboarding__content edit-post-layout__content">
-							<div
-								className="gutenboarding__content-editor edit-post-visual-editor editor-styles-wrapper"
-								role="region"
-								aria-label={ __( 'Onboarding screen content' ) }
-								tabIndex={ -1 }
-							>
-								<BlockList />
+			<SlotFillProvider>
+				<DropZoneProvider>
+					<div className="gutenboarding__layout edit-post-layout">
+						<Header />
+						{ showSignupDialog && <SignupForm onRequestClose={ onSignupDialogClose } /> }
+						<BlockEditorProvider
+							useSubRegistry={ false }
+							value={ [ onboardingBlock.current ] }
+							settings={ {
+								templateLock: 'all',
+								alignWide: true,
+							} }
+						>
+							<div className="gutenboarding__content edit-post-layout__content">
+								<div
+									className="gutenboarding__content-editor edit-post-visual-editor editor-styles-wrapper"
+									role="region"
+									aria-label={ __( 'Onboarding screen content' ) }
+									tabIndex={ -1 }
+								>
+									<BlockList />
+								</div>
 							</div>
-						</div>
-					</BlockEditorProvider>
-				</div>
-			</DropZoneProvider>
-			<Popover.Slot />
+						</BlockEditorProvider>
+					</div>
+				</DropZoneProvider>
+				<Popover.Slot />
+			</SlotFillProvider>
 		</div>
 	);
 	/* eslint-enable wpcalypso/jsx-classname-namespace */
