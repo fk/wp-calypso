@@ -55,7 +55,7 @@ function WPLineItem( {
 	const shouldShowVariantSelector = getItemVariants && item.wpcom_meta && ! isRenewal;
 	const isGSuite = !! item.wpcom_meta?.extra?.google_apps_users?.length;
 	const isSavings = item.type === 'coupon';
-	const isRtl = useRtl();
+	const isRTL = useRtl();
 
 	let gsuiteDiscountCallout = null;
 	if (
@@ -64,7 +64,9 @@ function WPLineItem( {
 		item.wpcom_meta?.is_sale_coupon_applied
 	) {
 		gsuiteDiscountCallout = (
-			<DiscountCalloutUI>{ translate( 'Discount for first year' ) }</DiscountCalloutUI>
+			<DiscountCalloutUI isRTL={ isRTL }>
+				{ translate( 'Discount for first year' ) }
+			</DiscountCalloutUI>
 		);
 	}
 
@@ -115,7 +117,7 @@ function WPLineItem( {
 								},
 							} );
 						} }
-						isRtl={ isRtl }
+						isRTL={ isRTL }
 					>
 						<DeleteIcon uniqueID={ deleteButtonId } product={ item.label } />
 					</DeleteButton>
@@ -176,9 +178,9 @@ WPLineItem.propTypes = {
 };
 
 function LineItemPrice( { item, isSummary } ) {
-	const isRtl = useRtl();
+	const isRTL = useRtl();
 	return (
-		<LineItemPriceUI isSummary={ isSummary } isRtl={ isRtl }>
+		<LineItemPriceUI isSummary={ isSummary } isRTL={ isRTL }>
 			{ item.amount.value < item.wpcom_meta?.item_original_subtotal_integer ? (
 				<>
 					<s>{ item.wpcom_meta?.item_original_subtotal_display }</s> { item.amount.displayValue }
@@ -219,7 +221,7 @@ const LineItemMeta = styled.div`
 
 const DiscountCalloutUI = styled.div`
 	color: ${ ( props ) => props.theme.colors.success };
-	text-align: right;
+	text-align: ${ ( props ) => ( props.isRTL ? 'left;' : 'right;' ) };
 `;
 
 const LineItemTitle = styled.div`
@@ -229,14 +231,14 @@ const LineItemTitle = styled.div`
 `;
 
 const LineItemPriceUI = styled.span`
-	${ ( props ) => ( props.isRtl ? 'margin-right: 12px;' : 'margin-left: 12px;' ) }
+	${ ( props ) => ( props.isRTL ? 'margin-right: 12px;' : 'margin-left: 12px;' ) }
 	font-size: ${ ( { isSummary } ) => ( isSummary ? '14px' : '16px' ) };
 `;
 
 const DeleteButton = styled( Button )`
 	position: absolute;
 	padding: 10px;
-	${ ( props ) => ( props.isRtl ? 'left: 50px;' : 'right: -50px;' ) }
+	${ ( props ) => ( props.isRTL ? 'left: 50px;' : 'right: -50px;' ) }
 	top: 7px;
 
 	:hover rect {
@@ -306,11 +308,11 @@ export function WPOrderReviewLineItems( {
 	onChangePlanLength,
 	isWhiteGloveOffer,
 } ) {
-	const isRtl = useRtl();
+	const isRTL = useRtl();
 	return (
 		<WPOrderReviewList
 			className={ joinClasses( [ className, 'order-review-line-items' ] ) }
-			isRtl={ isRtl }
+			isRTL={ isRTL }
 		>
 			{ items
 				.filter( ( item ) => item.label ) // remove items without a label
@@ -358,7 +360,7 @@ WPOrderReviewLineItems.propTypes = {
 const WPOrderReviewList = styled.ul`
 	border-top: 1px solid ${ ( props ) => props.theme.colors.borderColorLight };
 	box-sizing: border-box;
-	margin: ${ ( props ) => ( props.isRtl ? '20px 0 20px 30px' : '20px 30px 20px 0' ) };
+	margin: ${ ( props ) => ( props.isRTL ? '20px 0 20px 30px' : '20px 30px 20px 0' ) };
 
 	.is-summary & {
 		border-top: 0;
@@ -502,16 +504,21 @@ function SavingsList( { item } ) {
 
 function DomainDiscountCallout( { item } ) {
 	const translate = useTranslate();
+	const isRTL = useRtl();
 
 	const isFreeBundledDomainRegistration = item.wpcom_meta?.is_bundled && item.amount.value === 0;
 	if ( isFreeBundledDomainRegistration ) {
-		return <DiscountCalloutUI>{ translate( 'First year free' ) }</DiscountCalloutUI>;
+		return (
+			<DiscountCalloutUI isRTL={ isRTL }>{ translate( 'First year free' ) }</DiscountCalloutUI>
+		);
 	}
 
 	const isFreeDomainMapping =
 		item.wpcom_meta?.product_slug === 'domain_map' && item.amount.value === 0;
 	if ( isFreeDomainMapping ) {
-		return <DiscountCalloutUI>{ translate( 'Free with your plan' ) }</DiscountCalloutUI>;
+		return (
+			<DiscountCalloutUI isRTL={ isRTL }>{ translate( 'Free with your plan' ) }</DiscountCalloutUI>
+		);
 	}
 
 	return null;

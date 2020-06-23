@@ -14,7 +14,7 @@ import {
 	useLineItemsOfType,
 	useTotal,
 } from '@automattic/composite-checkout';
-import { useTranslate } from 'i18n-calypso';
+import { useTranslate, useRtl } from 'i18n-calypso';
 
 /**
  * Internal dependencies
@@ -81,11 +81,12 @@ export default function WPCheckoutOrderSummary() {
 }
 
 function LoadingCheckoutSummaryFeaturesList() {
+	const isRTL = useRtl();
 	return (
 		<>
-			<LoadingCopy />
-			<LoadingCopy />
-			<LoadingCopy />
+			<LoadingCopy isRTL={ isRTL } />
+			<LoadingCopy isRTL={ isRTL } />
+			<LoadingCopy isRTL={ isRTL } />
 		</>
 	);
 }
@@ -95,6 +96,7 @@ function CheckoutSummaryFeaturesList() {
 	const domains = useDomainsInCart();
 	const hasPlanInCart = useHasPlanInCart();
 	const translate = useTranslate();
+	const isRTL = useRtl();
 
 	const supportText = hasPlanInCart
 		? translate( 'Email and live chat support' )
@@ -114,12 +116,12 @@ function CheckoutSummaryFeaturesList() {
 					return <CheckoutSummaryFeaturesListDomainItem domain={ domain } key={ domain.id } />;
 				} ) }
 			{ hasPlanInCart && <CheckoutSummaryPlanFeatures /> }
-			<CheckoutSummaryFeaturesListItem>
-				<WPCheckoutCheckIcon />
+			<CheckoutSummaryFeaturesListItem isRTL={ isRTL }>
+				<WPCheckoutCheckIcon isRTL={ isRTL } />
 				{ supportText }
 			</CheckoutSummaryFeaturesListItem>
-			<CheckoutSummaryFeaturesListItem>
-				<WPCheckoutCheckIcon />
+			<CheckoutSummaryFeaturesListItem isRTL={ isRTL }>
+				<WPCheckoutCheckIcon isRTL={ isRTL } />
 				{ refundText }
 			</CheckoutSummaryFeaturesListItem>
 		</CheckoutSummaryFeaturesListUI>
@@ -128,9 +130,10 @@ function CheckoutSummaryFeaturesList() {
 
 function CheckoutSummaryFeaturesListDomainItem( { domain } ) {
 	const translate = useTranslate();
+	const isRTL = useRtl();
 	return (
-		<CheckoutSummaryFeaturesListItem>
-			<WPCheckoutCheckIcon />
+		<CheckoutSummaryFeaturesListItem isRTL={ isRTL }>
+			<WPCheckoutCheckIcon isRTL={ isRTL } />
 			{ domain.wpcom_meta.is_bundled ? (
 				translate( '{{strong}}%(domain)s{{/strong}} - %(bundled)s', {
 					components: {
@@ -151,6 +154,7 @@ function CheckoutSummaryFeaturesListDomainItem( { domain } ) {
 
 function CheckoutSummaryPlanFeatures() {
 	const translate = useTranslate();
+	const isRTL = useRtl();
 	const hasDomainsInCart = useHasDomainsInCart();
 	const planInCart = usePlanInCart();
 	const hasRenewalInCart = useHasRenewalInCart();
@@ -161,8 +165,8 @@ function CheckoutSummaryPlanFeatures() {
 			{ planFeatures &&
 				planFeatures.map( ( feature, index ) => {
 					return (
-						<CheckoutSummaryFeaturesListItem key={ index }>
-							<WPCheckoutCheckIcon />
+						<CheckoutSummaryFeaturesListItem key={ index } isRTL={ isRTL }>
+							<WPCheckoutCheckIcon isRTL={ isRTL } />
 							{ feature }
 						</CheckoutSummaryFeaturesListItem>
 					);
@@ -222,6 +226,7 @@ function getPlanFeatures( plan, translate, hasDomainsInCart, hasRenewalInCart ) 
 function CheckoutSummaryHelp() {
 	const reduxDispatch = useDispatch();
 	const translate = useTranslate();
+	const isRTL = useRtl();
 	const plans = useLineItemsOfType( 'plan' );
 
 	const supportVariationDetermined = useSelector( isSupportVariationDetermined );
@@ -257,7 +262,9 @@ function CheckoutSummaryHelp() {
 	return (
 		<>
 			<QuerySupportTypes />
-			{ ! shouldRenderPaymentChatButton && ! supportVariationDetermined && <LoadingButton /> }
+			{ ! shouldRenderPaymentChatButton && ! supportVariationDetermined && (
+				<LoadingButton isRTL={ isRTL } />
+			) }
 			{ shouldRenderPaymentChatButton ? (
 				<PaymentChatButton />
 			) : (
@@ -347,15 +354,15 @@ const CheckoutSummaryHelpButton = styled.button`
 
 const WPCheckoutCheckIcon = styled( CheckoutCheckIcon )`
 	fill: ${ ( props ) => props.theme.colors.success };
-	margin-right: 4px;
+	${ ( props ) => ( props.isRTL ? 'margin-left: 4px;' : 'margin-right: 4px;' ) }
 	position: absolute;
 	top: 0;
-	left: 0;
+	${ ( props ) => ( props.isRTL ? 'right: 0;' : 'left: 0;' ) }
 `;
 
 const CheckoutSummaryFeaturesListItem = styled.li`
 	margin-bottom: 4px;
-	padding-left: 24px;
+	${ ( props ) => ( props.isRTL ? 'padding-right: 24px;' : 'padding-left: 24px;' ) }
 	position: relative;
 `;
 
@@ -390,7 +397,7 @@ const LoadingCopy = styled.p`
 	content: '';
 	font-size: 14px;
 	height: 18px;
-	margin: 8px 0 0 26px;
+	margin: ${ ( props ) => ( props.isRTL ? '8px 26px 0 0;' : '8px 0 0 26px;' ) }
 	padding: 0;
 	position: relative;
 
@@ -398,7 +405,7 @@ const LoadingCopy = styled.p`
 		content: '';
 		display: block;
 		position: absolute;
-		left: -26px;
+		${ ( props ) => ( props.isRTL ? 'right: -26px;' : 'left: -26px;' ) }
 		top: 0;
 		width: 18px;
 		height: 18px;
