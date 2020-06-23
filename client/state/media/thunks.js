@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import uniqueId from 'lodash/uniqueId';
+import { assign, uniqueId } from 'lodash';
 
 /**
  * Internal dependencies
@@ -13,6 +13,7 @@ import {
 	dispatchFluxFetchMediaLimits,
 	dispatchFluxReceiveMediaItemError,
 	dispatchFluxReceiveMediaItemSuccess,
+	dispatchFluxUpdateMediaItem,
 } from 'state/media/utils/flux-adapter';
 import {
 	createMediaItem,
@@ -20,9 +21,12 @@ import {
 	successMediaItemRequest,
 	failMediaItemRequest,
 	setMediaItemErrors,
+	editMediaItem,
+	updateMediaItem,
 } from 'state/media/actions';
 import { saveSiteSettings, updateSiteSettings } from 'state/site-settings/actions';
 import { errorNotice } from 'state/notices/actions';
+import getMediaItem from 'state/selectors/get-media-item';
 
 /**
  * Add a single media item. Allow passing in the transient date so
@@ -142,4 +146,52 @@ export const uploadSiteIcon = (
 			dispatch( updateSiteIcon( siteId, originalSiteIconId ) );
 		}
 	}
+};
+
+/**
+ * Redux thunk to edit a media item.
+ *
+ * Note: Temporarily this action will dispatch to the flux store, until
+ * the flux store is removed.
+ *
+ * @param {number} siteId site identifier
+ * @param {object} item edited media item
+ */
+export const editMedia = ( siteId, item ) => ( dispatch, getState ) => {
+	const transientMediaItem = createTransientMedia( item.media || item.media_url );
+
+	if ( ! transientMediaItem ) {
+		return;
+	}
+
+	const mediaId = item.ID;
+	const originalMediaItem = getMediaItem( getState(), siteId, mediaId );
+	const editedMediaItem = assign( {}, originalMediaItem, transientMediaItem, {
+		ID: mediaId,
+		isDirty: true,
+	} );
+
+	dispatchFluxUpdateMediaItem( siteId, editedMediaItem );
+
+	dispatch( editMediaItem( siteId, item ) );
+};
+
+/**
+ * Redux thunk to update a media item data.
+ *
+ * Note: Temporarily this action will dispatch to the flux store, until
+ * the flux store is removed.
+ *
+ * @param {number} siteId site identifier
+ * @param {object} item edited media item
+ */
+export const updateMedia = ( siteId, item ) => ( dispatch, getState ) => {
+	const mediaId = item.ID;
+
+	const originalMediaItem = getMediaItem( getState(), siteId, mediaId );
+	const updatedMediaItem = assign( {}, originalMediaItem, item );
+
+	dispatchFluxUpdateMediaItem( siteId, updatedMediaItem );
+
+	dispatch( updateMediaItem( siteId, updatedMediaItem ) );
 };
