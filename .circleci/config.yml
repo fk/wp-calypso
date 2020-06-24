@@ -135,12 +135,13 @@ references:
     name: Update node
     command: |
       set +e
+      set -u
       set +x
       export NVM_DIR="$HOME/.nvm" && (
         git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
         cd "$NVM_DIR"
         git checkout v0.35.3
-      ) && \. "$NVM_DIR/nvm.sh" --no-use
+      ) && [ -s "${NVM_DIR}/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
       nvm install
       nvm alias default "$(cat .nvmrc)"
       nvm use
