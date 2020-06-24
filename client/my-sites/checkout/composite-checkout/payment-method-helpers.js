@@ -124,6 +124,16 @@ export async function submitStripeBancontactTransaction( transactionData, submit
 	return submit( formattedTransactionData );
 }
 
+export async function submitStripeAlipayTransaction( transactionData, submit ) {
+	const formattedTransactionData = createTransactionEndpointRequestPayloadFromLineItems( {
+		...transactionData,
+		paymentMethodType: 'WPCOM_Billing_Stripe_Source_Alipay',
+		paymentPartnerProcessorId: transactionData.stripeConfiguration.processor_id,
+	} );
+	debug( 'sending stripe alipay transaction', formattedTransactionData );
+	return submit( formattedTransactionData );
+}
+
 export async function submitStripeGiropayTransaction( transactionData, submit ) {
 	const formattedTransactionData = createTransactionEndpointRequestPayloadFromLineItems( {
 		...transactionData,

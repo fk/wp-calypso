@@ -15,6 +15,7 @@ import {
 	submitStripeCardTransaction,
 	submitStripeIdealTransaction,
 	submitStripeGiropayTransaction,
+	submitStripeAlipayTransaction,
 	submitStripeBancontactTransaction,
 	submitFreePurchaseTransaction,
 	submitCreditsTransaction,
@@ -79,6 +80,43 @@ export function bancontactProcessor( submitData, getThankYouUrl, isWhiteGloveOff
 		query,
 	} );
 	const pending = submitStripeBancontactTransaction(
+		{
+			...submitData,
+			successUrl,
+			cancelUrl,
+			country: select( 'wpcom' )?.getContactInfo?.()?.countryCode?.value,
+			postalCode: select( 'wpcom' )?.getContactInfo?.()?.postalCode?.value,
+			subdivisionCode: select( 'wpcom' )?.getContactInfo?.()?.state?.value,
+			siteId: select( 'wpcom' )?.getSiteId?.(),
+			domainDetails: getDomainDetails( select ),
+		},
+		wpcomTransaction
+	);
+	// save result so we can get receipt_id and failed_purchases in getThankYouPageUrl
+	pending.then( ( result ) => {
+		// TODO: do this automatically when calling setTransactionComplete
+		dispatch( 'wpcom' ).setTransactionResponse( result );
+	} );
+	return pending;
+}
+
+export function alipayProcessor( submitData, getThankYouUrl, isWhiteGloveOffer ) {
+	const { protocol, hostname, port, pathname } = parseUrl( window.location.href, true );
+	const query = isWhiteGloveOffer ? { type: 'white-glove' } : {};
+	const successUrl = formatUrl( {
+		protocol,
+		hostname,
+		port,
+		pathname: getThankYouUrl(),
+	} );
+	const cancelUrl = formatUrl( {
+		protocol,
+		hostname,
+		port,
+		pathname,
+		query,
+	} );
+	const pending = submitStripeAlipayTransaction(
 		{
 			...submitData,
 			successUrl,

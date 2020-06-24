@@ -63,6 +63,7 @@ import {
 	payPalProcessor,
 	idealProcessor,
 	giropayProcessor,
+	alipayProcessor,
 	bancontactProcessor,
 } from './payment-method-processors';
 import { useGetThankYouUrl } from './use-get-thank-you-url';
@@ -475,6 +476,8 @@ export default function CompositeCheckout( {
 			card: stripeCardProcessor,
 			bancontact: ( transactionData ) =>
 				bancontactProcessor( transactionData, getThankYouUrl, isWhiteGloveOffer ),
+			alipay: ( transactionData ) =>
+				alipayProcessor( transactionData, getThankYouUrl, isWhiteGloveOffer ),
 			giropay: ( transactionData ) =>
 				giropayProcessor( transactionData, getThankYouUrl, isWhiteGloveOffer ),
 			ideal: ( transactionData ) =>
