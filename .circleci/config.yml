@@ -639,6 +639,11 @@ jobs:
       - attach_workspace:
           at: /Users/distiller/wp-calypso
       - run: *update-node
+      - run:
+          name: Verify Node Version
+          command: |
+            nvm list
+            yarn --version
       - run: *yarn-install
       - run:
           name: Build Desktop Mac
