@@ -68,7 +68,7 @@ const RadioButtonWrapper = styled.div`
 		margin: 0;
 	}
 
-	:before {
+	::before {
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -86,7 +86,7 @@ const RadioButtonWrapper = styled.div`
 		}
 	}
 
-	:hover:before {
+	:hover::before {
 		border: 3px solid ${ ( props ) => props.theme.colors.highlight };
 	}
 
@@ -115,8 +115,8 @@ function handleWrapperDisabled( { disabled } ) {
 	}
 
 	return `
-		:before,
-		:hover:before {
+		::before,
+		:hover::before {
 			border: 1px solid lightgray;
 		}
 
@@ -153,7 +153,7 @@ const Label = styled.label`
 		cursor: pointer;
 	}
 
-	:before {
+	::before {
 		display: block;
 		width: 16px;
 		height: 16px;
@@ -173,7 +173,7 @@ const Label = styled.label`
 		}
 	}
 
-	:after {
+	::after {
 		display: block;
 		width: 8px;
 		height: 8px;
@@ -208,12 +208,12 @@ function handleLabelDisabled( { disabled } ) {
 			cursor: default;
 		}
 
-		:before {
+		::before {
 			border: 1px solid lightgray;
 			background: lightgray;
 		}
 
-		:after {
+		::after {
 			background: white;
 		}
 
