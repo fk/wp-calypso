@@ -63,6 +63,7 @@ import {
 	payPalProcessor,
 	idealProcessor,
 	giropayProcessor,
+	bancontactProcessor,
 } from './payment-method-processors';
 import { useGetThankYouUrl } from './use-get-thank-you-url';
 import createAnalyticsEventHandler from './record-analytics';
@@ -472,6 +473,8 @@ export default function CompositeCheckout( {
 			'apple-pay': applePayProcessor,
 			'free-purchase': freePurchaseProcessor,
 			card: stripeCardProcessor,
+			bancontact: ( transactionData ) =>
+				bancontactProcessor( transactionData, getThankYouUrl, isWhiteGloveOffer ),
 			giropay: ( transactionData ) =>
 				giropayProcessor( transactionData, getThankYouUrl, isWhiteGloveOffer ),
 			ideal: ( transactionData ) =>

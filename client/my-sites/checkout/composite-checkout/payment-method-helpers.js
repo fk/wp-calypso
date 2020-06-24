@@ -114,6 +114,16 @@ export async function submitStripeIdealTransaction( transactionData, submit ) {
 	return submit( formattedTransactionData );
 }
 
+export async function submitStripeBancontactTransaction( transactionData, submit ) {
+	const formattedTransactionData = createTransactionEndpointRequestPayloadFromLineItems( {
+		...transactionData,
+		paymentMethodType: 'WPCOM_Billing_Stripe_Source_Bancontact',
+		paymentPartnerProcessorId: transactionData.stripeConfiguration.processor_id,
+	} );
+	debug( 'sending stripe bancontact transaction', formattedTransactionData );
+	return submit( formattedTransactionData );
+}
+
 export async function submitStripeGiropayTransaction( transactionData, submit ) {
 	const formattedTransactionData = createTransactionEndpointRequestPayloadFromLineItems( {
 		...transactionData,
