@@ -118,8 +118,8 @@ references:
   restore-yarn-cache: &restore-yarn-cache
     name: 'Restore yarn cache'
     keys:
-      - v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}-{{ checksum "yarn.lock" }}
-      - v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}
+      - v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}-{{ checksum "yarn.lock" }}-{{ arch }}
+      - v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}-{{ arch }}
 
   yarn-install: &yarn-install
     name: Install dependencies
@@ -147,7 +147,7 @@ references:
 
   save-yarn-cache: &save-yarn-cache
     name: 'Save yarn cache'
-    key: v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}-{{ checksum "yarn.lock" }}
+    key: v{{ .Environment.GLOBAL_CACHE_PREFIX }}-yarn-modules-{{ checksum ".nvmrc" }}-{{ checksum "yarn.lock" }}-{{ arch }}
     paths:
       - ~/.cache/yarn
 
@@ -179,16 +179,42 @@ references:
     command: |
       cp -r ./reports $CIRCLE_TEST_REPORTS/e2ereports &&
       cp -r ./screenshots $CIRCLE_ARTIFACTS/screenshots
-  decrypt-desktop-assets: &decrypt-desktop-assets
+
+  desktop-install-linux-dependencies: &desktop-install-linux-dependencies
+    name: Install Desktop Linux Dependencies
+    command: |
+      sudo apt-get update
+      sudo apt-get -y install libxkbfile-dev libxss-dev libxext-dev libx11-dev uuid-runtime
+  desktop-cache-paths: &desktop-cache-paths
+    - desktop/build
+    - desktop/resource/certificates/win.p12
+    - desktop/resource/certificates/mac.p12
+    - public
+    - client/server
+    - config
+    - package.json
+    - packages
+    - yarn.lock
+    - .nvmrc
+  desktop-decrypt-assets: &desktop-decrypt-assets
     name: Decrypt desktop app assets
     command: |
       openssl aes-256-cbc -md md5 -d -in desktop/resource/calypso/secrets.json.enc -out config/secrets.json -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
       openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/mac.p12.enc -out desktop/resource/certificates/mac.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
       openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/win.p12.enc -out desktop/resource/certificates/win.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}"
-  move-desktop-mac-artifacts: &move-desktop-mac-artifacts
+  desktop-move-mac-artifacts: &desktop-move-mac-artifacts
     name: Move Desktop Mac Artifacts
     command: |
       cp -r ./desktop/release/*.{zip,dmg} $CIRCLE_ARTIFACTS/wp-desktop
+      calypso_prepare_cache: &calypso_prepare_cache
+  desktop-restore-cache: &desktop-restore-cache
+      name: Restore desktop cache
+      keys:
+        - v6-desktop-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ .Environment.CIRCLE_SHA1 }}
+  desktop-save-cache: &desktop-save-cache
+      name: Save desktop cache
+      key: v6-desktop-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ .Environment.CIRCLE_SHA1 }}
+      paths: *desktop-cache-paths
 
 commands:
   prepare:
@@ -584,22 +610,37 @@ jobs:
       - store-artifacts-and-test-results
       - slack/status:
           webhook: << parameters.slack-webhook >>
-  build-desktop-mac:
+
+  desktop-build-source:
+    <<: *defaults
+    working_directory: ~/wp-calypso
+    parallelism: 1
+    environment:
+      NODE_ARGS: --max_old_space_size=3072
+    steps:
+      - run: *desktop-install-linux-dependencies
+      - restore_cache: *desktop-restore-cache
+      - run: *desktop-decrypt-assets
+      - run:
+          name: Build Desktop Source
+          command: |
+            make -f desktop/Makefile build-source
+      - restore_cache: *desktop-save-cache
+      - persist_to_workspace:
+          root: ~/wp-calypso
+          paths: *desktop-cache-paths
+
+  desktop-build-mac:
     macos:
       xcode: "10.1.0"
     shell: /bin/bash --login
-    working_directory: /Users/distiller/wp-desktop
+    working_directory: /Users/distiller/wp-calypso
     steps:
       - checkout
       - attach_workspace:
-          at: /Users/distiller/wp-desktop
-      - run: *decrypt-desktop-assets
-      - run:
-          name: Install Node Modules
-          command: |
-            source $HOME/.nvm/nvm.sh
-            nvm use
-            yarn install --frozen-lockfile
+          at: /Users/distiller/wp-calypso
+      - run: *update-node
+      - run: *yarn-install
       - run:
           name: Build Desktop Mac
           no_output_timeout: 30m
@@ -611,8 +652,8 @@ jobs:
                   source $HOME/.nvm/nvm.sh
                   nvm use
 
-                  NODE_ENV=production CONFIG_ENV=release yarn run build-desktop
-      - run: *move-desktop-mac-artifacts
+                  make -f desktop/Makefile package
+      - run: *desktop-move-mac-artifacts
 
 workflows:
   version: 2
@@ -684,9 +725,12 @@ workflows:
           test-flags: '-W -S $CIRCLE_SHA1'
           test-target: 'WOO'
           slack-webhook: '$SLACK_WOO'
-      - build-desktop-mac:
+      - desktop-build-source:
           requires:
             - setup
+      - desktop-build-mac:
+          requires:
+            - desktop-build-source
 
   calypso-nightly:
     jobs:
