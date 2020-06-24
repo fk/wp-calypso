@@ -23,6 +23,7 @@ references:
         "$CIRCLE_ARTIFACTS/translate"           \
         "$CIRCLE_ARTIFACTS/screenshots"         \
         "$CIRCLE_ARTIFACTS/wpcom-block-editor"  \
+        "$CIRCLE_ARTIFACTS/wp-desktop"          \
         "$CIRCLE_TEST_REPORTS/client"           \
         "$CIRCLE_TEST_REPORTS/eslint"           \
         "$CIRCLE_TEST_REPORTS/integration"      \
@@ -178,6 +179,16 @@ references:
     command: |
       cp -r ./reports $CIRCLE_TEST_REPORTS/e2ereports &&
       cp -r ./screenshots $CIRCLE_ARTIFACTS/screenshots
+  decrypt-desktop-assets: &decrypt-desktop-assets
+    name: Decrypt desktop app assets
+    command: |
+      openssl aes-256-cbc -md md5 -d -in desktop/resource/calypso/secrets.json.enc -out config/secrets.json -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
+      openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/mac.p12.enc -out desktop/resource/certificates/mac.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
+      openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/win.p12.enc -out desktop/resource/certificates/win.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}"
+  move-desktop-mac-artifacts: &move-desktop-mac-artifacts
+    name: Move Desktop Mac Artifacts
+    command: |
+      cp -r ./desktop/release/*.{zip,dmg} $CIRCLE_ARTIFACTS/wp-desktop
 
 commands:
   prepare:
@@ -573,6 +584,35 @@ jobs:
       - store-artifacts-and-test-results
       - slack/status:
           webhook: << parameters.slack-webhook >>
+  build-desktop-mac:
+    macos:
+      xcode: "10.1.0"
+    shell: /bin/bash --login
+    working_directory: /Users/distiller/wp-desktop
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /Users/distiller/wp-desktop
+      - run: *decrypt-desktop-assets
+      - run:
+          name: Install Node Modules
+          command: |
+            source $HOME/.nvm/nvm.sh
+            nvm use
+            yarn install --frozen-lockfile
+      - run:
+          name: Build Desktop Mac
+          no_output_timeout: 30m
+          environment:
+            CSC_LINK: desktop/resource/certificates/mac.p12
+            CSC_FOR_PULL_REQUEST: true # don't do this in production
+          command: |
+                  set +e
+                  source $HOME/.nvm/nvm.sh
+                  nvm use
+
+                  NODE_ENV=production CONFIG_ENV=release yarn run build-desktop
+      - run: *move-desktop-mac-artifacts
 
 workflows:
   version: 2
@@ -644,6 +684,9 @@ workflows:
           test-flags: '-W -S $CIRCLE_SHA1'
           test-target: 'WOO'
           slack-webhook: '$SLACK_WOO'
+      - build-desktop-mac:
+          requires:
+            - setup
 
   calypso-nightly:
     jobs:
