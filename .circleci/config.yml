@@ -188,6 +188,7 @@ references:
       cp -r ./screenshots $CIRCLE_ARTIFACTS/screenshots
 
   desktop-cache-paths: &desktop-cache-paths
+    - desktop/Makefile
     - desktop/build
     - desktop/resource/certificates/win.p12
     - desktop/resource/certificates/mac.p12
