@@ -379,7 +379,10 @@ class CalypsoifyIframe extends Component<
 
 		if ( EditorActions.TrackPerformance === action ) {
 			if ( payload.mark === 'editor.ready' ) {
-				this.props.stopPerformanceTracking();
+				this.props.stopPerformanceTracking( {
+					isNew: payload.isNew,
+					blockCount: payload.blockCount,
+				} );
 			}
 		}
 	};
