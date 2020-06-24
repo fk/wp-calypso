@@ -191,6 +191,7 @@ references:
     - desktop/build
     - desktop/resource/certificates/win.p12
     - desktop/resource/certificates/mac.p12
+    - desktop/package.json
     - public
     - client/server
     - config
