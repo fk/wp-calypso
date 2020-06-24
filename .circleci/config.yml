@@ -14,6 +14,12 @@ references:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
       DETECT_CHROMEDRIVER_VERSION: 'false'
       CHROMEDRIVER_FILEPATH: /usr/local/bin/chromedriver
+  desktop_defaults: &desktop_defaults
+    working_directory: ~/wp-calypso
+    docker:
+      - image: circleci/node:12.18.0-browsers
+    environment:
+      NODE_ARGS: --max_old_space_size=3072
 
   setup-results-and-artifacts: &setup-results-and-artifacts
     name: Create Directories for Results and Artifacts
@@ -136,6 +142,7 @@ references:
         git checkout v0.35.3
       ) && \. "$NVM_DIR/nvm.sh" --no-use
       nvm install
+      nvm alias default "$(cat .nvmrc)"
       nvm use
 
   # This is used later to send a custom UA string. `google-chrome` is in the PATH in all circleci-browser images
@@ -180,11 +187,6 @@ references:
       cp -r ./reports $CIRCLE_TEST_REPORTS/e2ereports &&
       cp -r ./screenshots $CIRCLE_ARTIFACTS/screenshots
 
-  desktop-install-linux-dependencies: &desktop-install-linux-dependencies
-    name: Install Desktop Linux Dependencies
-    command: |
-      sudo apt-get update
-      sudo apt-get -y install libxkbfile-dev libxss-dev libxext-dev libx11-dev uuid-runtime
   desktop-cache-paths: &desktop-cache-paths
     - desktop/build
     - desktop/resource/certificates/win.p12
@@ -199,22 +201,22 @@ references:
   desktop-decrypt-assets: &desktop-decrypt-assets
     name: Decrypt desktop app assets
     command: |
-      openssl aes-256-cbc -md md5 -d -in desktop/resource/calypso/secrets.json.enc -out config/secrets.json -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
-      openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/mac.p12.enc -out desktop/resource/certificates/mac.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}" &&
+      openssl aes-256-cbc -md md5 -d -in desktop/resource/calypso/secrets.json.enc -out config/secrets.json -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}"
+      openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/mac.p12.enc -out desktop/resource/certificates/mac.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}"
       openssl aes-256-cbc -md md5 -d -in desktop/resource/certificates/win.p12.enc -out desktop/resource/certificates/win.p12 -k "${CALYPSO_SECRETS_ENCRYPTION_KEY}"
-  desktop-move-mac-artifacts: &desktop-move-mac-artifacts
-    name: Move Desktop Mac Artifacts
-    command: |
-      cp -r ./desktop/release/*.{zip,dmg} $CIRCLE_ARTIFACTS/wp-desktop
-      calypso_prepare_cache: &calypso_prepare_cache
-  desktop-restore-cache: &desktop-restore-cache
+  desktop-restore-source-cache: &desktop-restore-source-cache
       name: Restore desktop cache
       keys:
         - v6-desktop-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ .Environment.CIRCLE_SHA1 }}
-  desktop-save-cache: &desktop-save-cache
+  desktop-save-source-cache: &desktop-save-source-cache
       name: Save desktop cache
       key: v6-desktop-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ .Environment.CIRCLE_SHA1 }}
       paths: *desktop-cache-paths
+  desktop-artifacts-cleanup: &desktop-artifacts-cleanup
+      name: Clean Up
+      command: |
+        find release -type f -name "._*" -delete
+        rm -rf release/.icon-set
 
 commands:
   prepare:
@@ -612,22 +614,20 @@ jobs:
           webhook: << parameters.slack-webhook >>
 
   desktop-build-source:
-    <<: *defaults
-    working_directory: ~/wp-calypso
-    parallelism: 1
-    environment:
-      NODE_ARGS: --max_old_space_size=3072
+    <<: *desktop_defaults
     steps:
-      - run: *desktop-install-linux-dependencies
-      - restore_cache: *desktop-restore-cache
+      - attach_workspace:
+          at: '~'
+      - run: *update-node
+      - restore_cache: *desktop-restore-source-cache
       - run: *desktop-decrypt-assets
       - run:
           name: Build Desktop Source
           command: |
-            make -f desktop/Makefile build-source
-      - restore_cache: *desktop-save-cache
+            make -f desktop/Makefile source
+      - restore_cache: *desktop-save-source-cache
       - persist_to_workspace:
-          root: ~/wp-calypso
+          root: /home/circleci/wp-calypso
           paths: *desktop-cache-paths
 
   desktop-build-mac:
@@ -636,7 +636,6 @@ jobs:
     shell: /bin/bash --login
     working_directory: /Users/distiller/wp-calypso
     steps:
-      - checkout
       - attach_workspace:
           at: /Users/distiller/wp-calypso
       - run: *update-node
@@ -646,85 +645,110 @@ jobs:
           no_output_timeout: 30m
           environment:
             CSC_LINK: desktop/resource/certificates/mac.p12
-            CSC_FOR_PULL_REQUEST: true # don't do this in production
+            CSC_FOR_PULL_REQUEST: true
           command: |
                   set +e
                   source $HOME/.nvm/nvm.sh
                   nvm use
 
                   make -f desktop/Makefile package
-      - run: *desktop-move-mac-artifacts
+      - run: *desktop-artifacts-cleanup
+      - store_artifacts:
+          path: desktop/release
+      - persist_to_workspace:
+          root: ~/wp-calypso
+          paths:
+            - desktop/release
+
+  desktop-artifacts:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /wp-desktop
+    steps:
+      - attach_workspace:
+          at: /wp-desktop
+      - run:
+          name: Clean Up
+          command: |
+            find release -type f -name "._*" -delete
+            rm -rf release/.icon-set
+      - persist_to_workspace:
+          root: /wp-desktop
+          paths:
+            - release
+      - store_artifacts:
+          path: release
 
 workflows:
   version: 2
   calypso:
     jobs:
       - setup
-      - prime-calypso-live:
-          filters:
-            branches:
-              ignore: master
-      - test-full-site-editing:
-          requires:
-            - setup
-      - build-notifications:
-          requires:
-            - setup
-      - build-o2-blocks:
-          requires:
-            - setup
-      - build-wpcom-block-editor:
-          requires:
-            - setup
-      - lint-and-translate:
-          requires:
-            - setup
-      - test-client:
-          requires:
-            - setup
-      - test-packages:
-          requires:
-            - setup
-      - test-server:
-          requires:
-            - setup
-      - typecheck-strict:
-          requires:
-            - setup
-      - wait-calypso-live:
-          requires:
-            - test-client
-            - test-server
-          filters:
-            branches:
-              ignore:
-                # Do not spin up calypso.live for `master`
-                - master
-                # Do not spin up calypso.live for fork pull requests. Calypso.live will not build them.
-                - /pull\/[0-9]+/
-#      - test-e2e-canary:
-#          requires:
-#            - wait-calypso-live
-#          test-flags: '-C -S $CIRCLE_SHA1'
-      - test-e2e-canary:
-          name: test-e2e-canary-ie
-          requires:
-            - wait-calypso-live
-          test-flags: '-z -S $CIRCLE_SHA1'
-          test-target: 'IE11'
-          slack-webhook: '$SLACK_IE'
-      - test-e2e-canary:
-          name: test-e2e-canary-safari
-          requires:
-            - wait-calypso-live
-          test-flags: '-y -S $CIRCLE_SHA1'
-      - test-e2e-canary:
-          name: test-e2e-canary-woo
-          requires:
-            - wait-calypso-live
-          test-flags: '-W -S $CIRCLE_SHA1'
-          test-target: 'WOO'
-          slack-webhook: '$SLACK_WOO'
+#       - prime-calypso-live:
+#           filters:
+#             branches:
+#               ignore: master
+#       - test-full-site-editing:
+#           requires:
+#             - setup
+#       - build-notifications:
+#           requires:
+#             - setup
+#       - build-o2-blocks:
+#           requires:
+#             - setup
+#       - build-wpcom-block-editor:
+#           requires:
+#             - setup
+#       - lint-and-translate:
+#           requires:
+#             - setup
+#       - test-client:
+#           requires:
+#             - setup
+#       - test-packages:
+#           requires:
+#             - setup
+#       - test-server:
+#           requires:
+#             - setup
+#       - typecheck-strict:
+#           requires:
+#             - setup
+#       - wait-calypso-live:
+#           requires:
+#             - test-client
+#             - test-server
+#           filters:
+#             branches:
+#               ignore:
+#                 # Do not spin up calypso.live for `master`
+#                 - master
+#                 # Do not spin up calypso.live for fork pull requests. Calypso.live will not build them.
+#                 - /pull\/[0-9]+/
+# #      - test-e2e-canary:
+# #          requires:
+# #            - wait-calypso-live
+# #          test-flags: '-C -S $CIRCLE_SHA1'
+#       - test-e2e-canary:
+#           name: test-e2e-canary-ie
+#           requires:
+#             - wait-calypso-live
+#           test-flags: '-z -S $CIRCLE_SHA1'
+#           test-target: 'IE11'
+#           slack-webhook: '$SLACK_IE'
+#       - test-e2e-canary:
+#           name: test-e2e-canary-safari
+#           requires:
+#             - wait-calypso-live
+#           test-flags: '-y -S $CIRCLE_SHA1'
+#       - test-e2e-canary:
+#           name: test-e2e-canary-woo
+#           requires:
+#             - wait-calypso-live
+#           test-flags: '-W -S $CIRCLE_SHA1'
+#           test-target: 'WOO'
+#           slack-webhook: '$SLACK_WOO'
       - desktop-build-source:
           requires:
             - setup
