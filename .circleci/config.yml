@@ -130,6 +130,7 @@ references:
     command: |
       source "$HOME/.nvm/nvm.sh"
       nvm use
+      npm install -g yarn
       yarn install --frozen-lockfile
 
   update-node: &update-node
@@ -649,12 +650,13 @@ jobs:
       - attach_workspace:
           at: /Users/distiller/wp-calypso
       - run: *update-node
+      - run: *yarn-install
       - run:
           name: Verify Node Version
           command: |
+            source "$HOME/.nvm/nvm.sh"
             nvm list
             yarn --version
-      - run: *yarn-install
       - run:
           name: Build Desktop Mac
           no_output_timeout: 30m
