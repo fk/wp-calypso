@@ -127,7 +127,10 @@ references:
 
   yarn-install: &yarn-install
     name: Install dependencies
-    command: yarn install --frozen-lockfile
+    command: |
+      source "$HOME/.nvm/nvm.sh"
+      nvm use
+      yarn install --frozen-lockfile
 
   update-node: &update-node
     name: Update node
