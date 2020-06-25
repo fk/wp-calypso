@@ -133,7 +133,6 @@ references:
     name: Update node
     command: |
       set +e
-      set -u
       set +x
 
       export NVM_DIR="${HOME}/.nvm"
